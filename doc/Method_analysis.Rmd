@@ -1,0 +1,172 @@
+# Methode d'analyse : manips **Nutrition**
+
+## 1. Analyse exploratoire 
+
+Dans un premier temps, il est necessaire de réaliser des contrôles et une selection des individus morts ou ayant une activité très faible (correspondant à un moustique blessé par ex) pour les analyses qui vont suivre. 
+
+Tout d'abord nous avons controlé que les tubes vides ne présentaient pas d'activité. 
+
+Par la suite nous avons analysé la cyclicité de l'activité des individus. Cela permet de connaitre la proportion d'individu acycliques en fonction des régimes. 
+Pour cela nous avons réalisé des periodogrammes. 
+Cette méthode semble très restricive car après analyse, peu d'individu peuvent être considerés comme cycliques. Cela vient peut être du fait que l'on a une activité qui décroit fortement au fil des jours et que l'activitié n'est donc pas considérée comme cyclique par le test. 
+
+46 acyclic chez les 5% 
+5% R1= 22/30
+5% R2 = 24/30
+
+52 acyclic chez 0.5% 
+0.5% R1 = 27/30 acyclic
+05 R2 = 25/30
+
+Nous avons donc conservé tous les individus pour les analyses exploratoires qui vont suivre. 
+
+Nous avons travaillé avec des frequences d'enregistrement de 10min. Nous avons fait une moyenne d'activité pour tous les individus pour chaque 10min. Les données des individus morts en cours d'enregistrement ont été conservées jusqu'au dernier jours d'enregistrement avec mouvement detectés. On travaille sur une plage horaire de 18h le 1er jour à 18h le 3eme jour. 
+
+Afin de comparer l'effet du régime sur l'activité nous avons d'abord réalisé un test de Student apparié pour chaque pas de temps ainsi qu'un test de Student pour comparer l'activité globale. 
+Les résultats ont démontré des différences pour certains pas de temps, et une différence entre les groupes pour le R1 uniquement. Nous avons remarqué que les plages horaires où, graphiquement, il y avoir une différence entre les groupes n'étaient pas detectées comme significative. Cela est probablement due à la grande variance de réponse entre les individus pour ces périodes là. 
+
+Le principal probleme que nous avons avec ces données est la différence d'intensité d'activité entre les individu, surtout pour les périodes de fortes activité (début de soirée/nuit). De même, au fil des jours d'enregistrement, certains moustiques ont une activité qui diminue très fortement. De plus, on observe qu'il y a des différence importantes entre réplicats (cf graph2). 
+
+En conclusion, a cause de cette variance importante qui a différentes origines, on ne peut pas se "contenter" de faire un test de Student simple. Il faut faire un (des) modèle qui tiendra compte de l'effet du réplicat, de l'effet du jour et de l'effet du régime sur l'activité. 
+Une autre méthode consisterai à faire une selection des individus qui ont des activités vraiment très faible (moribonds), les retirer et réaliser un test de Student par ex comme cela a déjà été fait. Cependant, la difficulté réside ici dans la mise en place d'un indicateur objectif qui nous permettrait de faire la disctimination. 
+
+## 2. Modélisation. 
+
+Nous avons des données longitudinales, c'est à dire dépendantes du temps. Les modèles que nous allons ajuster sont donc des modèles linéraires généralisés mixtes.
+
+a. Les modèles ajustés 
+
+J'ai d'abord regardé la distribution des données : grande surdispersion et 0inflation. Pour en tenir compte j'ai choisi d'ajuster des GLMM negative binomiaux avec zero inflation. D'après les données également, on a vu qu'en journée, les 0 étaient très présents du fait de l'inactivité des moustiques la journée, j'ai donc choisi, afin de ne pas avoir de modèles trop complexes, de ne travailler que sur les périodes de nuit. On peut proceder de 2 façons : Soit on garde tous les jours d'enregistrements mais on retire les enregistrements de jour, soit on découpe le jeu de données selon les 3 périodes et on fait 1 modèle par période. La gestion de l'heure ici se fait avec des lags de temps (18h=0 et 06h=12) plutôt que les heures brutes (cela évite des soucis dans les courbes). 
+
+
+Dans un premier temps, nous allons tester la première méthode globale afin de voir : 1) s'il y a un effet nuit et 2) si un modèle complet s'ajuste bien. D'un point de vue analyse, il sera plus facile d'interpreter des modèles ajustés par nuit. 
+Ces modèles globaux s'ajustent bien, et nous permettent de voir qu'il y a un effet du réplicat, de la nuit et de l'heure sur la réponse. 
+
+Pour gerer la 0 inflation, nous pouvons egalement ajuster un modèle de hurdle (ici zi~heure) qui permettra de gerer les 0 avec deux distri différentes (cf chapitre Zuur, ou doc package glmmTMB). (page 273)
+La 0 inflation est toujours un peu délicate à gerer (surtout en M2) car elle necessite l'utilisation de modèle un peu plus sophistiqués que ceux qui sont enseignés dans un premier temps.
+
+
+## Résultats
+
+Modèle gardé = Value~ Food * Replicat * Nuit * Hour3, zi=~Hour3
+
+Quelles sont les covariables qui ont un effet sur la réponse (activité). 
+Même si on est à la limite de la significativité, on peut dire de façon générale que l'activité n'est pas la même 
+selon la nuit, le réplicat, l'heure et la nourriture. 
+
+Analysis of Deviance Table (Type II Wald chisquare tests)
+
+Response: Value
+                            Chisq Df Pr(>Chisq)    
+Food                       2.6367  1  0.1044212    
+Replicat                 155.3214  1  < 2.2e-16 ***
+Nuit                     333.1421  2  < 2.2e-16 ***
+Hour3                     49.8584  1  1.653e-12 ***
+Food:Replicat             35.3010  1  2.825e-09 ***
+Food:Nuit                 23.0374  2  9.942e-06 ***
+Replicat:Nuit             14.4493  2  0.0007284 ***
+Food:Hour3                 8.9762  1  0.0027352 ** 
+Replicat:Hour3            19.0129  1  1.298e-05 ***
+Nuit:Hour3                 6.1036  2  0.0472747 *  
+Food:Replicat:Nuit         7.2004  2  0.0273180 *  
+Food:Replicat:Hour3        1.1028  1  0.2936462    
+Food:Nuit:Hour3            1.0713  2  0.5852933    
+Replicat:Nuit:Hour3        4.3018  2  0.1163770    
+Food:Replicat:Nuit:Hour3   4.8249  2  0.0895934 .  
+
+Dans cette partie tu as les coefficients des comparaisons entre les 2 régimes pour chaque nuit, chaque réplicat et 3 heures. Ca devrait déjà faire pas mal ^^, même si à mon avis tu n'est pas obligée des tout mettre. Selectionne peut être les plus pertinents selon les graphiques. 
+
+Comparaison 0.5%-5% pour chaque nuit-replicat et heure=18 (=0), 00(=6) et 6h(=12)
+
+Replicat = 1, Nuit = N1, Hour3 =  0:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.1605 0.1420 24701 -1.130  0.2586 
+
+Replicat = 2, Nuit = N1, Hour3 =  0:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.3112 0.2102 24701 -1.480  0.1388 
+
+Replicat = 1, Nuit = N2, Hour3 =  0:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%   0.1668 0.1379 24701  1.209  0.2265 
+
+Replicat = 2, Nuit = N2, Hour3 =  0:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%   0.4546 0.2051 24701  2.216  0.0267 
+
+Replicat = 1, Nuit = N3, Hour3 =  0:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.0434 0.1749 24701 -0.248  0.8041 
+
+Replicat = 2, Nuit = N3, Hour3 =  0:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%   0.9911 0.2438 24701  4.064  <.0001 
+
+Replicat = 1, Nuit = N1, Hour3 =  6:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.4511 0.0815 24701 -5.532  <.0001 
+
+Replicat = 2, Nuit = N1, Hour3 =  6:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.0944 0.1051 24701 -0.898  0.3693 
+
+Replicat = 1, Nuit = N2, Hour3 =  6:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.0479 0.0751 24701 -0.637  0.5239 
+
+Replicat = 2, Nuit = N2, Hour3 =  6:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%   0.2878 0.1017 24701  2.830  0.0047 
+
+Replicat = 1, Nuit = N3, Hour3 =  6:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.2464 0.0890 24701 -2.770  0.0056 
+
+Replicat = 2, Nuit = N3, Hour3 =  6:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%   0.5636 0.1224 24701  4.606  <.0001 
+
+Replicat = 1, Nuit = N1, Hour3 = 12:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.7417 0.1706 24701 -4.348  <.0001 
+
+Replicat = 2, Nuit = N1, Hour3 = 12:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%   0.1225 0.2063 24701  0.594  0.5528 
+
+Replicat = 1, Nuit = N2, Hour3 = 12:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.2625 0.1490 24701 -1.762  0.0781 
+
+Replicat = 2, Nuit = N2, Hour3 = 12:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%   0.1209 0.1936 24701  0.625  0.5321 
+
+Replicat = 1, Nuit = N3, Hour3 = 12:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%  -0.4495 0.1806 24701 -2.489  0.0128 
+
+Replicat = 2, Nuit = N3, Hour3 = 12:
+ contrast  estimate     SE    df t.ratio p.value
+ 5% - 0.5%   0.1361 0.2446 24701  0.556  0.5781 
+
+
+---
+Idée => autre méthode pour selectionner les ID moribonds : selection relative. 
+
+- comparaison avec les moyennes : 
+On fait la moyenne d'activité par jour par individu. On fait ensuite la moyenne de cette activité de tous les ID par jour et on identifie les ID qui sont avec des moyennes d'activité journalière trop basse par rapport a la moyenne générale. 
+
+- comparaison somme : 
+On fait la somme d'activité par jour pour chaque ID, puis la moyenne globale par jour pour tous les ID. Ensuite on identifie les ID qui ont une somme trop basse = mort ou moribonds.  
+Il faut trouver la limite (biologique?) quel écart tolère t'on ? 
+
+---
+
+
+
+
+
+
+
+
